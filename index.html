@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Собери пазл: Колобок</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4e8d3;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            color: #5a3a1a;
+        }
+        h1 { margin-bottom: 20px; }
+        
+        .game-container {
+            display: flex;
+            gap: 40px;
+            align-items: flex-start;
+        }
+
+        /* Игровое поле (куда перетаскиваем) */
+        .board {
+            width: 400px;
+            height: 400px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 2px;
+            background-color: #d2b48c;
+            border: 4px solid #8b4513;
+            border-radius: 8px;
+            padding: 2px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+
+        .drop-zone {
+            width: 200px;
+            height: 200px;
+            background-color: #eaddc5;
+            border: 2px dashed #a0522d;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Кусочки пазла */
+        .pieces-area {
+            width: 200px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .puzzle-piece {
+            width: 95px;
+            height: 95px;
+            background-image: url('kolobok.jpg'); /* Название вашей картинки */
+            background-size: 400px 400px; /* Размер картинки в 2 раза больше поля (400x400) */
+            cursor: grab;
+            border: 2px solid #8b4513;
+            border-radius: 4px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        
+        .puzzle-piece:active { cursor: grabbing; }
+
+        /* Позиции кусочков (нарезаем картинку 400x400 на 4 части 200x200) */
+        /* Учитывая, что в превью кусочек 95x95, используем background-size: 400px 400px */
+        .piece-0 { background-position: 0 0; }
+        .piece-1 { background-position: -200px 0; }
+        .piece-2 { background-position: 0 -200px; }
+        .piece-3 { background-position: -200px -200px; }
+
+        /* Кусочек, который уже вставлен */
+        .placed {
+            width: 200px;
+            height: 200px;
+            border: none;
+            box-shadow: none;
+            cursor: default;
+        }
+
+        /* Сообщение о победе */
+        #message {
+            margin-top: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #228b22;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        
+        .visible { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <h1>Соберите пазл «Колобок»</h1>
+    
+    <div class="game-container">
+        <!-- Поле для сбора -->
+        <div class="board" id="board">
+            <div class="drop-zone" data-index="0"></div>
+            <div class="drop-zone" data-index="1"></div>
+            <div class="drop-zone" data-index="2"></div>
+            <div class="drop-zone" data-index="3"></div>
+        </div>
+
+        <!-- Детали пазла -->
+        <div class="pieces-area" id="pieces">
+            <div class="puzzle-piece piece-3" draggable="true" data-index="3"></div>
+            <div class="puzzle-piece piece-0" draggable="true" data-index="0"></div>
+            <div class="puzzle-piece piece-1" draggable="true" data-index="1"></div>
+            <div class="puzzle-piece piece-2" draggable="true" data-index="2"></div>
+        </div>
+    </div>
+
+    <div id="message">🎉 Ура! Колобок собран! 🎉</div>
+
+    <script>
+        const pieces = document.querySelectorAll('.puzzle-piece');
+        const zones = document.querySelectorAll('.drop-zone');
+        const message = document.getElementById('message');
+        let placedCount = 0;
+
+        // Обработка перетаскивания
+        pieces.forEach(piece => {
+            piece.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', piece.dataset.index);
+                // Убираем кусочек из списка доступных при перетаскивании
+                setTimeout(() => piece.style.opacity = '0', 0); 
+            });
+
+            piece.addEventListener('dragend', (e) => {
+                piece.style.opacity = '1';
+            });
+        });
+
+        // Обработка зон для сброса
+        zones.forEach(zone => {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault(); // Разрешаем сброс
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                const pieceIndex = e.dataTransfer.getData('text/plain');
+                
+                // Проверяем, совпадает ли кусочек с зоной
+                if (zone.dataset.index === pieceIndex && zone.children.length === 0) {
+                    const draggedPiece = document.querySelector(`.puzzle-piece[data-index="${pieceIndex}"]`);
+                    
+                    // Вставляем кусочек в зону
+                    zone.appendChild(draggedPiece);
+                    draggedPiece.classList.add('placed');
+                    draggedPiece.setAttribute('draggable', 'false'); // Больше нельзя перетащить
+                    draggedPiece.style.opacity = '1';
+                    
+                    placedCount++;
+                    
+                    // Проверка победы
+                    if (placedCount === 4) {
+                        message.classList.add('visible');
+                    }
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
